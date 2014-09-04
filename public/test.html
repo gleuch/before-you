@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/" xmlns="http://www.w3.org/1999/xhtml">
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<!--
+
+
+                           Created by Greg Leuch | contact@gleu.ch | @gleuch                          
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+             All work is copyrighted 2003-2014 by Greg Leuch and/or its respective owners.            
+
+     All other non-copyrighted or non-licensed work is licensed under Creative Commons Attribution-   
+       Share Alike 3.0 United States License <http://creativecommons.org/licenses/by-sa/3.0/us>.      
+
+        Permissions beyond the scope of this license may be acquired at http://gleu.ch/contact.       
+
+
+-->
+
+<meta charset="UTF-8">
+<title>Before You</title>
+<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+<!-- <link data-turbolinks-track="true" href="/assets/application-6e4808b738bfc0a0da7e87cfbb55ff0d.css" media="all" rel="stylesheet" />
+<script data-turbolinks-track="true" src="/assets/application-5a8de99d3de0da70df8e0d397390c951.js"></script> -->
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+
+<meta content="" name="description">
+<meta content="" name="keywords">
+<meta content="US" name="language">
+<meta content="en-us" itemprop="inLanguage">
+<meta content="/" name="url">
+<link href="" rel="canonical">
+<link href="/about" rel="help">
+<link href="/" rel="Start">
+<meta content="Copyright 2003–2014 Greg Leuch, unless noted differently." name="copyright">
+<meta content="Greg Leuch at https://gleu.ch/" name="author">
+<meta content="Greg Leuch" name="owner">
+<meta content="index,follow" name="robots">
+<meta content="index,follow" name="googlebot">
+<meta content="3 days" name="revisit-after">
+<meta content="General" name="rating">
+<meta content="global" name="distribution">
+<meta content="worldwide" name="coverage">
+<meta content="" name="generator">
+<link crossOrigin="" href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
+<link href="/images/share/logo.png" rel="image_src">
+<meta content="Greg Leuch : Creative &amp; Interactive" property="og:site_name">
+<meta content="/" property="og:url">
+<meta property="og:title">
+<meta property="og:description">
+<meta content="/images/share/logo.png" property="og:image">
+<meta content="website" property="og:type">
+<meta content="" property="fb:app_id">
+<meta content="7002294" property="fb:admins">
+<meta content="@gleuch" name="twitter:site">
+<meta content="@gleuch" name="twitter:creator">
+<meta content="/images/share/logo.png" name="twitter:image:src">
+<meta content="" name="google-site-verification">
+<link href="" rel="publisher">
+<meta itemprop="description">
+<meta content="/images/share/logo.png" itemprop="image">
+<meta content="false" name="pinterest-rich-pin">
+
+<script>
+var ga = function() {
+
+};
+ga("create", "UA-", "auto")// ;
+ga("send", "pageview");
+</script>
+
+</head>
+<body class="">
+  <div id="fb_root"></div>
+
+
+  <div id="container">
+
+    <div id="before-you-queue" class="queue-area">
+      <div class="queue">
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+        <img src="" alt="" title="" />
+      </div>
+    </div>
+
+
+  </div>
+
+<style type="text/css" media="all">
+
+.queue-area {position: absolute; bottom: 40px; right: 40px; width: 400px; height: 300px;}
+.queue-area .queue {position: relative; width: 400px; height: 300px;}
+.queue-area .queue img {position: absolute; display: inline-block; top: 0; left: 0; opacity: 0; width: 400px; height: 300px; background-color: #eee; border: 1px solid #ccc;
+  -webkit-transition: top .3s ease-out, opacity .2s ease-out;
+  transition: top .3s ease-out, opacity .2s ease-out;
+}
+.queue-area .queue img.hover {top: -20px;}
+.queue-area .queue img.open {top: -284px; opacity: 1 !important;}
+
+</style>
+
+<script>
+
+var BeforeYou = function() {
+  this.visible_items = 20;
+  this.zindex_high = this.visible_items * 1000;
+  this.x_offset = 24;
+  this.y_offset = 6;
+  this.z_offset = 5;
+  this.you = 'uuidhere';
+
+  $this = this;
+
+  $('#before-you-queue').find('img').each(function(i) {
+    var x = -(i * $this.x_offset);
+    var y = -(i * $this.y_offset);
+
+    setTimeout(function() {
+      $(this).attr('data-index', i).css({
+        'opacity' : (1 - (i / $this.visible_items)), 
+        'z-index': $this.zindex_high - i, 
+        'margin-left' : x + 'px', 
+        'margin-top' : y + 'px',
+        // css perspective depth, will remove need for negaive margin left/top
+      })
+    }.bind(this)
+    , (10 * i) );
+
+    $(this).click($this.item.click).hover($this.item.mouseover, $this.item.mouseout)
+  });
+  return this;
+};
+
+$.extend(BeforeYou.prototype, {
+  load : function() {
+    $('body').addClass('load')
+  },
+
+  setup : function() {
+    
+  },
+
+  resize : function() {
+    
+  },
+
+  mousemove : function() {
+    
+  },
+
+  item : {
+    open : null,
+
+    mouseover : function() {
+      if ($this.item.openItem == $(this).attr('data-index')) {
+        clearTimeout($this.item.openTimeout);
+      }
+      $(this).addClass('hover');
+    },
+    mouseout : function() {
+      $(this).removeClass('hover');
+    },
+    click : function() {
+      if ($this.item.open == $(this).attr('data-index')) {
+        alert('do something cool')
+        $(this).removeClass('open hover')
+        $this.item.open = null;
+      } else {
+        $this.item.open = $(this).attr('data-index');
+        $(this).parent('.queue').find('img').removeClass('open');
+        $(this).addClass('open');
+      }
+    }
+  }
+
+})
+
+
+
+
+$(document).ready(function() {
+
+  var you = new BeforeYou();
+  you.load()
+
+});
+
+
+</script>
+
+
+</body>
+</html>
