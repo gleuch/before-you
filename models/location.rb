@@ -58,7 +58,7 @@ class Location < ActiveRecord::Base
   end
 
   # Track the last visit and visits count by this ip address.
-  def track!
+  def impression!
     self.update(visits_count: (self.visits_count || 0) + 1, last_visited_at: Time.now)
   end
 
