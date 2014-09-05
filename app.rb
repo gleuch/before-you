@@ -6,69 +6,65 @@
 
 # START IT UP...
 
-require "rubygems"
-require "bundler"
-Bundler.require
+require 'sinatra/base'
 
-require "sinatra"
+class BeforeYou < Sinatra::Application
+  configure do
+    APP_ROOT = File.expand_path('.', File.dirname(__FILE__))
+    DEBUG = false
+    TIME_START = Time.now
+
+    require "#{APP_ROOT}/config.rb"
+    require 'sinatra/content_for'
+    require 'sinatra/respond_with'
+
+    helpers Sinatra::ContentFor
+    register Sinatra::RespondWith
+
+    register Sinatra::AssetPack
+    assets {
+      serve '/js',     from: 'app/js'        # Default
+      serve '/css',    from: 'app/css'       # Default
+      serve '/images', from: 'app/images'    # Default
+
+      js :app, '/js/app.js', ['/js/vendor/**/*.js', '/js/lib/**/*.js', '/js/application.js']
+      css :application, '/css/app.css', ['/css/screen.css']
+
+      js_compression  :jsmin    # :jsmin | :yui | :closure | :uglify
+      css_compression :simple   # :simple | :sass | :yui | :sqwish
+    }
 
 
-configure do
-  APP_ROOT = File.expand_path('.', File.dirname(__FILE__))
-  DEBUG = false
-  TIME_START = Time.now
-  require "#{APP_ROOT}/config.rb"
+    # FLASH_TYPES = [:warning, :notice, :success, :error]
+    # use Rack::Session::Cookie, key: 'beforeyou_rack_key', secret: '0hN0aft3ryu0plz1insi5t', path: '/', expire_after: 21600
+    # set :sessions => true
 
-  %w{haml sinatra/content_for sinatra/respond_to sinatra/r18n sinatra/flash}.each{|r| require r}
+    # --- I18N -------------------------------
+    # register Sinatra::R18n
+    # set :default_locale, 'en'
+    # set :translations,   './i18n'
 
-  Sinatra::Application.register Sinatra::RespondTo
-
-  files = []
-  files += Dir.glob("#{APP_ROOT}/lib/*.rb")
-  files.each{|r| require r}
-
-
-  # Ugly override!
-  module Sinatra
-    module RespondTo
-      module Helpers
-        def format(val=nil)
-          unless val.nil?
-            mime_type = ::Sinatra::Base.mime_type(val)
-            @_format = val.to_sym
-            if mime_type.nil?
-              request.path_info << ".#{val}"
-              mime_type = 'text/html'
-              @_format = 'html'
-            end
-            response['Content-Type'] ? response['Content-Type'].sub!(/^[^;]+/, mime_type) : content_type(@_format)
-          end
-          @_format
-        end
-      end
-    end
   end
 
 
-  FLASH_TYPES = [:warning, :notice, :success, :error]
-  use Rack::Session::Cookie, key: 'beforeyou_rack_key', secret: '0hN0aft3ryu0plz1insi5t', path: '/', expire_after: 21600
-  set :sessions => true
+  # Homepage
+  get '/' do
+    # Get "you", based on your IP address
+    @you = Location.where(ip_address: request.ip).first_or_create do |u|
+      u.ip_address = request.ip
+      u.useragent = request.user_agent
+    end
 
-  # Allow iframe embedding
-  set :protection, except: :frame_options
+    # Track the impression of "you"
+    @you.impression!
 
-  # --- I18N -------------------------------
-  APP_LOCALES = {
-    en: 'English',
-  }
+    # Get the person before you
+    @before_you = Location.latest.completed.first
 
-  Sinatra::Application.register Sinatra::R18n
-  set :default_locale, 'en'
-  set :translations,   './i18n'
+    # Show them who was before them
+    respond_to do |format|
+      format.html { haml :'index.html', layout: :'layout.html' }
+    end
+  end
 
-end
-
-before do
-  # set_current_user_locale
-  # set_template_defaults
 end

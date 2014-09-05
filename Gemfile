@@ -10,9 +10,10 @@ gem 'mysql2',                   '0.3.16',     require: false
 # Sinatra Helpers -------------------------------------------------------------
 gem 'sinatra',                  '1.4.5'
 gem 'sinatra-flash',            '0.3.0'
-gem 'sinatra-respond_to',       '0.9.0'
-gem 'sinatra-content-for',      '0.2',        git: 'git://github.com/gleuch/sinatra-content-for.git'
-gem 'sinatra-r18n',             '1.1.11'
+# gem 'sinatra-respond_to',       '0.9.0'
+# gem 'sinatra-content-for',      '0.2',        git: 'git://github.com/gleuch/sinatra-content-for.git'
+gem 'sinatra-contrib',          '1.4.2'
+# gem 'sinatra-r18n',             '1.1.11'
 
 # Models ----------------------------------------------------------------------
 gem 'activerecord',             '4.1.5'
@@ -21,9 +22,13 @@ gem 'activesupport',            '4.1.5'
 gem 'paperclip',                '4.2.0'
 gem 'friendly_id',              '5.0.4'
 
-# Views -----------------------------------------------------------------------
+# Views & Assets --------------------------------------------------------------
 gem 'haml',                     '4.0.5'
 # gem 'will_paginate',            '3.0.3'
+gem 'coffee-script',            '2.3.0'
+gem 'sinatra-assetpack',        '0.3.3'
+gem 'execjs',                   '2.2.1'
+gem 'therubyracer',             '0.12.1'
 
 # Other Helpers ---------------------------------------------------------------
 gem 'addressable',              '2.3.6'

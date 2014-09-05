@@ -1,4 +1,8 @@
 require 'rubygems'
+require 'bundler'
+
+# require bundled gems
+Bundler.require
 
 root_dir = File.dirname(__FILE__)
 
@@ -7,6 +11,7 @@ set :environemnt, :development
 set :root,        root_dir
 set :app_file,    File.join(root_dir, 'app.rb')
 set :logging,     :true
+
 disable :run
 enable :logging
 
@@ -23,5 +28,5 @@ $stdout.sync = true
 
 map '/' do
   require "#{root_dir}/app"
-  run Sinatra::Application
+  run BeforeYou
 end
