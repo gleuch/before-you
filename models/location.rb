@@ -68,7 +68,7 @@ protected
   # STEP 1: Get geo info
   def process_step_one
     geo = Geocoder.search(ip_address).first rescue nil
-    puts geo.inspect
+
     if geo.present? && geo.data.present?
       addy = %w(city region_name country_name).map{|n| geo.data[n]}.compact.join(', ')
       self.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy)

@@ -80,7 +80,16 @@ ga("send", "pageview");
 
 
   <div id="container">
-
+    <nav id="nav">
+      <ul>
+        <li>
+          <a href="#about" class="icon icon-about">about</a>
+        </li>
+        <li id="credit">
+          <a href="https://gleu.ch" class="icon icon-signature">created by greg leuch</a>
+        </li>
+      </ul>
+    </nav>
     <div id="before-you-queue" class="queue-area">
       <div class="queue">
         <img src="" alt="" title="" />
@@ -105,20 +114,32 @@ ga("send", "pageview");
         <img src="" alt="" title="" />
       </div>
     </div>
-
-
   </div>
 
 <style type="text/css" media="all">
 
-.queue-area {position: absolute; bottom: 40px; right: 40px; width: 400px; height: 300px;}
-.queue-area .queue {position: relative; width: 400px; height: 300px;}
-.queue-area .queue img {position: absolute; display: inline-block; top: 0; left: 0; opacity: 0; width: 400px; height: 300px; background-color: #eee; border: 1px solid #ccc;
-  -webkit-transition: top .3s ease-out, opacity .2s ease-out;
-  transition: top .3s ease-out, opacity .2s ease-out;
+body, #container {width: 100%; height: 100%; overflow: hidden;}
+.queue-area {position: absolute; bottom: 15%; right: 0px; width: 400px; height: 300px;}
+.queue-area .queue {width: 100%; height: 300%;}
+.queue-area .queue img {position: absolute; display: block; top: 0; left: 0; opacity: 0; width: 400px; height: 300px; background-color: #eee; border: 1px solid #ccc;
+  transition: opacity .2s ease-out;
+  border-top: 1px solid #ff0000;
+  backface-visibility: hidden;
+  transform-origin: center center;
 }
+.queue-area .queue img.done {transition: transform .3s ease-out, top .3s ease-out, opacity .2s ease-out;}
 .queue-area .queue img.hover {top: -20px;}
-.queue-area .queue img.open {top: -284px; opacity: 1 !important;}
+.queue-area .queue img.open {top: -284px; opacity: 1 !important; transition: transform .2s .2s ease-out, top .3s ease-out, opacity .2s ease-out;}
+
+.queue-area {
+  perspective: 1200px;
+}
+.queue-area .queue {
+  transform-style: preserve-3d;
+  transform: translateZ( 0 ) rotate3d(-133,360,-39,55deg);
+  transform-origin: center center;
+}
+
 
 </style>
 
@@ -129,7 +150,7 @@ var BeforeYou = function() {
   this.zindex_high = this.visible_items * 1000;
   this.x_offset = 24;
   this.y_offset = 6;
-  this.z_offset = 5;
+  this.z_offset = 100;
   this.you = 'uuidhere';
 
   $this = this;
@@ -137,17 +158,22 @@ var BeforeYou = function() {
   $('#before-you-queue').find('img').each(function(i) {
     var x = -(i * $this.x_offset);
     var y = -(i * $this.y_offset);
+    var z = -(i * $this.z_offset);
+
+    console.log(z)
 
     setTimeout(function() {
       $(this).attr('data-index', i).css({
         'opacity' : (1 - (i / $this.visible_items)), 
         'z-index': $this.zindex_high - i, 
-        'margin-left' : x + 'px', 
-        'margin-top' : y + 'px',
-        // css perspective depth, will remove need for negaive margin left/top
+        // 'margin-left' : x + 'px', 
+        // 'margin-top' : y + 'px',
+        'transform' : 'translateZ(' + z + 'px)',
+        // perspective here
       })
+      setTimeout(function() { $(this).addClass('done') }.bind(this), 300);
     }.bind(this)
-    , (10 * i) );
+    , (150 * i) );
 
     $(this).click($this.item.click).hover($this.item.mouseover, $this.item.mouseout)
   });
@@ -167,7 +193,7 @@ $.extend(BeforeYou.prototype, {
     
   },
 
-  mousemove : function() {
+  mousedrag : function() {
     
   },
 
@@ -185,13 +211,16 @@ $.extend(BeforeYou.prototype, {
     },
     click : function() {
       if ($this.item.open == $(this).attr('data-index')) {
-        alert('do something cool')
-        $(this).removeClass('open hover')
+        $(this).removeClass('open hover').css('transform', $(this).data('default-transform'))
         $this.item.open = null;
       } else {
         $this.item.open = $(this).attr('data-index');
-        $(this).parent('.queue').find('img').removeClass('open');
-        $(this).addClass('open');
+        $(this).data('default-transform', $(this).css('transform'))
+        $(this).parent('.queue').find('img').each(function() {
+          if ($(this).data('default-transform')) $(this).css('transform', $(this).data('default-transform'))
+          $(this).removeClass('open');
+        });
+        $(this).addClass('open').css('transform', $(this).data('default-transform') + ' rotate3d(-133,360,-39,-55deg)');
       }
     }
   }
