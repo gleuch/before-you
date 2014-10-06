@@ -28,10 +28,10 @@ class BeforeYou < Sinatra::Application
       serve '/images', from: 'app/images'    # Default
 
       js :app, '/js/app.js', ['/js/vendor/**/*.js', '/js/lib/**/*.js', '/js/application.js']
-      css :application, '/css/app.css', ['/css/screen.css']
+      css :app, '/css/app.css', ['/css/screen.css']
 
       js_compression  :jsmin    # :jsmin | :yui | :closure | :uglify
-      css_compression :simple   # :simple | :sass | :yui | :sqwish
+      css_compression :sass   # :simple | :sass | :yui | :sqwish
     }
 
 
@@ -54,6 +54,8 @@ class BeforeYou < Sinatra::Application
       u.ip_address = request.ip
       u.useragent = request.user_agent
     end
+
+    # Location.delay_for(1.second).photo_locate(@you.id)
 
     # Track the impression of "you"
     @you.impression!

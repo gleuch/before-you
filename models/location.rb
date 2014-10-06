@@ -12,8 +12,6 @@ class Location < ActiveRecord::Base
   include Paperclip::Glue
   has_attached_file :image, styles: {}
 
-  # geocoded_by :ip_address
-
 
   # Associations --------------------------------------------------------------
 
@@ -24,7 +22,7 @@ class Location < ActiveRecord::Base
   validates :useragent, presence: true, length: {minimum: 2}
   validates_attachment_content_type :image, content_type: /\Aimage\/.*\z/
 
-  after_create :queue_process
+  after_create :send_through_queue
 
 
   # Scopes --------------------------------------------------------------------
@@ -41,13 +39,11 @@ class Location < ActiveRecord::Base
 
   # Methods -------------------------------------------------------------------
 
-  # TODO: USE SIDEKIQ
-  def queue_process
-    process_step_one
-  end
-
   # Does location have geo info?
   def located?; self.lat.present? && self.lng.present? && self.country.present?; end
+
+  # Is it a reserved (192.*.*.* or other known private-level IP address)
+  def reserved?; self.located? && self.country == 'RD'; end
 
   # Does location have picture?
   def pictured?; self.image_file_name.present? && self.image_file_size > 0; end
@@ -63,26 +59,49 @@ class Location < ActiveRecord::Base
   end
 
 
-protected
-
   # STEP 1: Get geo info
-  def process_step_one
-    geo = Geocoder.search(ip_address).first rescue nil
+  def self.geo_locate(id)
+    puts "GEO LOCATE"
+    loc = find(id) rescue nil
+    return if loc.blank?
 
+    geo = Geocoder.search(loc.ip_address).first rescue nil
     if geo.present? && geo.data.present?
-      addy = %w(city region_name country_name).map{|n| geo.data[n]}.compact.join(', ')
-      self.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy)
+      addy = %w(city region_name country_name).map{|n| geo.data[n]}.reject(&:blank?).compact
+      unless addy.include?('Reserved')
+        loc.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy.join(', '))
+        delay_for(1.second).photo_locate(id)
+      else
+        loc.update(address: 'Reserved', country: 'RD', lat: 0.0, lng: 0.0)
+      end
 
-      process_step_two
     else
-      puts "NOT FOUND"
-      # requeue for later
+      # TODO : requeue for later
     end
   end
 
   # STEP 2: Get picture from Flickr based on location
-  def process_step_two
-    # Get picture here
+  def self.photo_locate(id)
+    loc = find(id) rescue nil
+    return if loc.blank?
+
+    # Flickr photo here
+
+    photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
+    puts photos.inspect
+
+    
   end
+
+
+  # Call geo_ and photo_ locate methods directly from record
+  def geo_locate; self.class.geo_locate(self.id); end
+  def photo_locate; self.class.photo_locate(self.id); end
+
+  # Queue geo and photo locate
+  def send_through_queue; self.class.delay_for(1.second).geo_locate(self.id); end
+  
+
+protected
 
 end
