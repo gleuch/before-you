@@ -1,32 +1,42 @@
-require 'rubygems'
-require 'bundler'
+#\ -s puma -E production -p 9292
 
-# require bundled gems
+require 'rubygems'
+
+require 'bundler'
 Bundler.require
 
-root_dir = File.dirname(__FILE__)
+require './app'
+require './middleware/websockets'
 
-# set :environment, :production
-set :environemnt, :development
-set :root,        root_dir
-set :app_file,    File.join(root_dir, 'app.rb')
-set :logging,     :true
+use BeforeYou::Backend
 
-disable :run
-enable :logging
+run BeforeYou::App
 
 
-log = File.new("log/#{Sinatra::Application.environment.to_s}.log", "a+")
-STDOUT.reopen(log)
-STDERR.reopen(log)
-$stdout.reopen(log)
-$stderr.reopen(log)
 
-$stderr.sync = true
-$stdout.sync = true
-
-
-map '/' do
-  require "#{root_dir}/app"
-  run BeforeYou
-end
+# root_dir = File.dirname(__FILE__)
+# 
+# # set :environment, :production
+# set :environemnt, :development
+# set :root,        root_dir
+# set :app_file,    File.join(root_dir, 'app.rb')
+# set :logging,     :true
+# 
+# disable :run
+# enable :logging
+# 
+# 
+# log = File.new("log/#{Sinatra::Application.environment.to_s}.log", "a+")
+# STDOUT.reopen(log)
+# STDERR.reopen(log)
+# $stdout.reopen(log)
+# $stderr.reopen(log)
+# 
+# $stderr.sync = true
+# $stdout.sync = true
+# 
+# 
+# map '/' do
+#   require "#{root_dir}/app"
+#   run BeforeYou
+# end

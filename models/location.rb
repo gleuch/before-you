@@ -3,6 +3,7 @@ class Location < ActiveRecord::Base
   # Variables & Includes ------------------------------------------------------
 
   require 'addressable/uri'
+  require 'redis'
 
   include Uuidable
 
@@ -36,6 +37,9 @@ class Location < ActiveRecord::Base
 
   # Class Methods -------------------------------------------------------------
 
+  # Channel name for redis pub/sub
+  def self.redis_channel; 'b4u-list'; end
+
 
   # Methods -------------------------------------------------------------------
 
@@ -58,10 +62,27 @@ class Location < ActiveRecord::Base
     self.update(visits_count: (self.visits_count || 0) + 1, last_visited_at: Time.now)
   end
 
+  def to_api
+    {
+      id: self.uuid,
+      lat: self.lat,
+      lng: self.lng,
+      country: self.country,
+      address: self.address,
+      image: {
+        url:          self.image.url,
+        source_url:   self.image_source_url,
+        owner:        self.image_attribute_owner_name,
+        title:        self.image_attribute_title,
+        license:      self.image_attribute_license,
+        taken_at:     self.image_attribute_taken_at
+      }      
+    }
+  end
+
 
   # STEP 1: Get geo info
   def self.geo_locate(id)
-    puts "GEO LOCATE"
     loc = find(id) rescue nil
     return if loc.blank?
 
@@ -74,6 +95,11 @@ class Location < ActiveRecord::Base
       else
         loc.update(address: 'Reserved', country: 'RD', lat: 0.0, lng: 0.0)
       end
+
+      # REDIS
+      uri = URI.parse('redis://localhost:6379')
+      redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+      redis.publish(redis_channel, JSON.generate( loc.to_api ))
 
     else
       # TODO : requeue for later
@@ -89,8 +115,6 @@ class Location < ActiveRecord::Base
 
     photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
     puts photos.inspect
-
-    
   end
 
 
