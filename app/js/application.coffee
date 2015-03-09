@@ -43,47 +43,51 @@ $.extend b4u.prototype, {
   response : (data)->
     switch data.action
       when 'self'
-        this.respondYou(data)
-      when 'next'
-        this.respondNext(data)
-      when 'previous'
-        this.respondPrevious(data)
-      else
-        alert('Unknown action: ' + data.action)
+        this.respondSelf(data.data)
+      when 'latest'
+        this.respondLatest(data.data)
+      # when 'next'
+      #   this.respondNext(data.data)
+      # when 'previous'
+      #   this.respondPrevious(data.data)
 
 
   # --- REQUEST FOR WEB ACTIONS ---
 
+  # Get latest
+  respondLatest : (data)->
+    alert('latest')
+
   # Get information about self, if processing
-  getYou : ->
+  getSelf : ->
     this.request {
       action : 'self'
     }
 
-  respondYou : (data)->
-     alert('you')
+  respondSelf : (data)->
+    alert('self')
 
 
-  # Paginate previous locations
-  getPrevious : ->
-    this.request {
-      action : 'previous'
-      id : this.prev_id
-    }
-
-  respondPrevious : (data)->
-     alert('previous')
-
-
-  # Paginate next locations
-  getNext : ->
-    this.request {
-      action : 'next'
-      id : this.next_id
-    }
-
-  respondNext : (data)->
-     alert('next')
+  # # Paginate previous locations
+  # getPrevious : ->
+  #   this.request {
+  #     action : 'previous'
+  #     id : this.prev_id
+  #   }
+  # 
+  # respondPrevious : (data)->
+  #    alert('previous')
+  # 
+  # 
+  # # Paginate next locations
+  # getNext : ->
+  #   this.request {
+  #     action : 'next'
+  #     id : this.next_id
+  #   }
+  # 
+  # respondNext : (data)->
+  #    alert('next')
 
 }
 
@@ -91,3 +95,6 @@ $.extend b4u.prototype, {
 $ ->
   window.$b4u = new b4u();
   window.$b4u.load()
+  setTimeout ->
+    window.$b4u.getSelf()
+  , 500

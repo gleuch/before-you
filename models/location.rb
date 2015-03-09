@@ -40,8 +40,64 @@ class Location < ActiveRecord::Base
   # Channel name for redis pub/sub
   def self.redis_channel; 'b4u-list'; end
 
+  # STEP 1: Get geo info
+  def self.geo_locate(id)
+    loc = find(id) rescue nil
+    return if loc.blank?
+
+    geo = Geocoder.search(loc.ip_address).first rescue nil
+    if geo.present? && geo.data.present?
+      addy = %w(city region_name country_name).map{|n| geo.data[n]}.reject(&:blank?).compact
+      unless addy.include?('Reserved')
+        loc.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy.join(', '))
+        delay_for(1.second).photo_locate(id)
+      else
+        loc.update(address: 'Reserved', country: 'RD', lat: 0.0, lng: 0.0)
+      end
+
+      loc.publish_redis_status(:updated)
+
+    else
+      # TODO : requeue for later
+    end
+  end
+
+  # STEP 2: Get picture from Flickr based on location
+  def self.photo_locate(id)
+    loc = find(id) rescue nil
+    return if loc.blank?
+
+    # Flickr photo here
+
+    photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
+
+    loc.publish_redis_status(:updated, :completed)
+  end
+
+
 
   # Methods -------------------------------------------------------------------
+
+  # Pub/sub name for location
+  def redis_channel; ['b4u',self.uuid].join('-'); end
+
+  # Publish response to redis
+  def publish_redis_status(*args)
+    uri = URI.parse('redis://localhost:6379')
+    redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+
+    args.each do |arg|
+      case arg.to_s
+        when 'completed'
+          redis.publish(self.class.redis_channel, JSON.generate( to_api ))
+        when 'updated'
+          redis.publish(redis_channel, JSON.generate( to_api ))
+      end
+    end
+  end
+
+
+  def completed?; located? && pictured?; end
 
   # Does location have geo info?
   def located?; self.lat.present? && self.lng.present? && self.country.present?; end
@@ -62,6 +118,7 @@ class Location < ActiveRecord::Base
     self.update(visits_count: (self.visits_count || 0) + 1, last_visited_at: Time.now)
   end
 
+  # Data to return
   def to_api
     {
       id: self.uuid,
@@ -79,44 +136,6 @@ class Location < ActiveRecord::Base
       }      
     }
   end
-
-
-  # STEP 1: Get geo info
-  def self.geo_locate(id)
-    loc = find(id) rescue nil
-    return if loc.blank?
-
-    geo = Geocoder.search(loc.ip_address).first rescue nil
-    if geo.present? && geo.data.present?
-      addy = %w(city region_name country_name).map{|n| geo.data[n]}.reject(&:blank?).compact
-      unless addy.include?('Reserved')
-        loc.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy.join(', '))
-        delay_for(1.second).photo_locate(id)
-      else
-        loc.update(address: 'Reserved', country: 'RD', lat: 0.0, lng: 0.0)
-      end
-
-      # REDIS
-      uri = URI.parse('redis://localhost:6379')
-      redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-      redis.publish(redis_channel, JSON.generate( loc.to_api ))
-
-    else
-      # TODO : requeue for later
-    end
-  end
-
-  # STEP 2: Get picture from Flickr based on location
-  def self.photo_locate(id)
-    loc = find(id) rescue nil
-    return if loc.blank?
-
-    # Flickr photo here
-
-    photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
-    puts photos.inspect
-  end
-
 
   # Call geo_ and photo_ locate methods directly from record
   def geo_locate; self.class.geo_locate(self.id); end

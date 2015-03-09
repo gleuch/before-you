@@ -2,21 +2,18 @@ require './config'
 
 module BeforeYou
   class Backend
-    KEEPALIVE_TIME = 15 # in seconds
 
     def initialize(app)
-      @app     = app
-      @clients = []
+      @app, @clients, @redis_uri = app, [], URI.parse('redis://localhost:6379')
+      @redis = Redis.new(host: @redis_uri.host, port: @redis_uri.port, password: @redis_uri.password)
 
-      uri = URI.parse('redis://localhost:6379')
-      @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-      
+      # New thread to listen for latest items
       Thread.new do
-        redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+        redis_sub = Redis.new(host: @redis_uri.host, port: @redis_uri.port, password: @redis_uri.password)
         redis_sub.subscribe(Location.redis_channel) do |on|
           on.message do |channel, msg|
             @clients.each do |ws|
-              ws.send( JSON.generate({action: 'new', data: JSON.parse(msg) }) )
+              ws.send( JSON.generate({action: 'latest', data: JSON.parse(msg)}) )
             end
           end
         end
@@ -25,21 +22,26 @@ module BeforeYou
 
     def call(env)
       if Faye::WebSocket.websocket?(env)
-        ws = Faye::WebSocket.new(env, nil, {ping: KEEPALIVE_TIME })
+        ws = Faye::WebSocket.new(env, nil, {ping: 15})
 
         ws.on :open do |event|
-          puts [:open, ws.object_id].inspect
           @clients << ws
         end
 
         ws.on :message do |event|
-          puts [:message, event.data].inspect
-          # @redis.publish(CHANNEL, sanitize(event.data))
-          # @redis.publish(CHANNEL, event.data)
+          begin
+            data = JSON.parse(event.data) rescue nil
+            case data['action']
+              when 'self'
+                get_current_location(ws, env['REMOTE_ADDR'])
+            end
+
+          rescue
+            nil
+          end
         end
 
         ws.on :close do |event|
-          puts [:close, ws.object_id, event.code, event.reason].inspect
           @clients.delete(ws)
           ws = nil
         end
@@ -52,13 +54,29 @@ module BeforeYou
       end
     end
 
+
+
   private
 
-    # def sanitize(message)
-    #   json = JSON.parse(message)
-    #   json.each {|key, value| json[key] = ERB::Util.html_escape(value) }
-    #   JSON.generate(json)
-    # end
+    def get_current_location(ws,ip)
+      loc = Location.where(ip_address: ip).first rescue nil
+      return if loc.blank?
 
+      # If location is completed, then return immediately
+      if loc.completed?
+        ws.send( JSON.generate( {action: 'self', data: loc.to_api} ) )
+
+      # Otherwise subscribe to thread to get updates
+      else
+        Thread.new do
+          redis_sub = Redis.new(host: @redis_uri.host, port: @redis_uri.port, password: @redis_uri.password)
+          redis_sub.subscribe(loc.redis_channel) do |on|
+            on.message do |channel, msg|
+              ws.send( JSON.generate({action: 'self', data: JSON.parse(msg)}) )
+            end
+          end
+        end
+      end
+    end
   end
 end

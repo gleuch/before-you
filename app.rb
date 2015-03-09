@@ -47,19 +47,6 @@ module BeforeYou
     end
 
 
-    # About Page
-    get '/about' do
-      respond_to do |format|
-        format.html { haml :'about.html', layout: :'layout.html' }
-      end
-    end
-
-
-    # Connect
-    get '/websocket/connect' do
-    end
-
-
     # Homepage
     get '/' do
       # Get "you", based on your IP address
@@ -68,15 +55,17 @@ module BeforeYou
         u.useragent = request.user_agent
       end
 
-      # Track the impression of "you"
-      @you.impression!
-
-      # Get the person before you
-      @before_you = Location.latest.completed.first
-
       # Show them who was before them
       respond_to do |format|
-        format.html { haml :'index.html', layout: :'layout.html' }
+        format.html {
+          # Track the impression of "you"
+          @you.impression!
+
+          # Get the person before you
+          @before_you = Location.latest.completed.first
+
+          haml :'index.html', layout: :'layout.html'
+        }
       end
     end
 
