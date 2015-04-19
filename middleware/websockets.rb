@@ -59,6 +59,8 @@ module BeforeYou
   private
 
     def get_current_location(ws,ip)
+      ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
+
       loc = Location.where(ip_address: ip).first rescue nil
       return if loc.blank?
 

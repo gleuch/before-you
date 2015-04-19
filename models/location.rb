@@ -23,7 +23,7 @@ class Location < ActiveRecord::Base
   validates :useragent, presence: true, length: {minimum: 2}
   validates_attachment_content_type :image, content_type: /\Aimage\/.*\z/
 
-  after_create :send_through_queue
+  after_create :geo_locate
 
 
   # Scopes --------------------------------------------------------------------
@@ -40,17 +40,25 @@ class Location < ActiveRecord::Base
   # Channel name for redis pub/sub
   def self.redis_channel; 'b4u-list'; end
 
+
   # STEP 1: Get geo info
   def self.geo_locate(id)
     loc = find(id) rescue nil
     return if loc.blank?
 
+    # Skip and queue photo query if previously located.
+    if loc.located?
+      loc.photo_locate unless loc.pictured?
+      return
+    end
+
+    # Locate geography from IP address
     geo = Geocoder.search(loc.ip_address).first rescue nil
     if geo.present? && geo.data.present?
       addy = %w(city region_name country_name).map{|n| geo.data[n]}.reject(&:blank?).compact
       unless addy.include?('Reserved')
         loc.update(lat: geo.data['latitude'], lng: geo.data['longitude'], country: geo.data['country_code'], address: addy.join(', '))
-        delay_for(1.second).photo_locate(id)
+        loc.photo_locate
       else
         loc.update(address: 'Reserved', country: 'RD', lat: 0.0, lng: 0.0)
       end
@@ -58,9 +66,10 @@ class Location < ActiveRecord::Base
       loc.publish_redis_status(:updated)
 
     else
-      # TODO : requeue for later
+      raise "Unable to locate #{loc.ip_address}"
     end
   end
+
 
   # STEP 2: Get picture from Flickr based on location
   def self.photo_locate(id)
@@ -68,8 +77,7 @@ class Location < ActiveRecord::Base
     return if loc.blank?
 
     # Flickr photo here
-
-    photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
+    #photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
 
     loc.publish_redis_status(:updated, :completed)
   end
@@ -80,6 +88,7 @@ class Location < ActiveRecord::Base
 
   # Pub/sub name for location
   def redis_channel; ['b4u',self.uuid].join('-'); end
+
 
   # Publish response to redis
   def publish_redis_status(*args)
@@ -97,26 +106,34 @@ class Location < ActiveRecord::Base
   end
 
 
-  def completed?; located? && pictured?; end
-
   # Does location have geo info?
   def located?; self.lat.present? && self.lng.present? && self.country.present?; end
+
 
   # Is it a reserved (192.*.*.* or other known private-level IP address)
   def reserved?; self.located? && self.country == 'RD'; end
 
+
   # Does location have picture?
   def pictured?; self.image_file_name.present? && self.image_file_size > 0; end
 
+
+  # Has been located and pictured?
+  def completed?; located? && pictured?; end
+
+
+  #
   def location
     return t(:location_not_known) unless located?
     self.address.present? ? self.address : (self.country_name.present? ? self.country : [self.lat, self.lng].join(', '))
   end
 
+
   # Track the last visit and visits count by this ip address.
   def impression!
     self.update(visits_count: (self.visits_count || 0) + 1, last_visited_at: Time.now)
   end
+
 
   # Data to return
   def to_api
@@ -137,12 +154,10 @@ class Location < ActiveRecord::Base
     }
   end
 
-  # Call geo_ and photo_ locate methods directly from record
-  def geo_locate; self.class.geo_locate(self.id); end
-  def photo_locate; self.class.photo_locate(self.id); end
 
-  # Queue geo and photo locate
-  def send_through_queue; self.class.delay_for(1.second).geo_locate(self.id); end
+  # Call delayed geo_ and photo_ locate methods from record
+  def geo_locate; self.class.delay_for(1.second).geo_locate(self.id); end
+  def photo_locate; self.class.delay_for(1.second).photo_locate(self.id); end
   
 
 protected

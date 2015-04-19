@@ -1,25 +1,9 @@
 #before-you-queue.queue-area
-  .queue
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
-    <img src="" alt="" title="" />
+  %ul.queue.list-unstyled
+    - @before_you.each do |loc|
+      %li
+        = loc.address
+        (#{loc.ip_address})
 
 #before-you-about
   %p

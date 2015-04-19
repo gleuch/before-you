@@ -50,8 +50,11 @@ module BeforeYou
     # Homepage
     get '/' do
       # Get "you", based on your IP address
-      @you = Location.where(ip_address: request.ip).first_or_create do |u|
-        u.ip_address = request.ip
+      ip = request.ip
+      ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
+
+      @you = Location.where(ip_address: ip).first_or_create do |u|
+        u.ip_address = ip
         u.useragent = request.user_agent
       end
 
@@ -62,7 +65,7 @@ module BeforeYou
           @you.impression!
 
           # Get the person before you
-          @before_you = Location.latest.completed.first
+          @before_you = Location.latest.completed.limit(10)
 
           haml :'index.html', layout: :'layout.html'
         }
