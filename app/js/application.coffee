@@ -22,14 +22,16 @@ $.extend b4u.prototype, {
     _t.ws = new WebSocket(ws_schema + window.document.location.host + '/')
 
     _t.ws.onerror = ->
-      alert('Connection Error')
+      console.log(arguments)
+      # alert('Connection Error')
 
     _t.ws.onmessage = (message)->
       try
         data = JSON.parse(message.data)
         _t.response(data)
       catch e
-        alert('Unknown error: ' + e)
+        console.log(arguments)
+        # alert('Unknown error: ' + e)
 
 
   # Make a WebSocket request
