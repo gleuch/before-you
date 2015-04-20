@@ -19,7 +19,7 @@ $.extend b4u.prototype, {
     _t = this
 
     ws_schema = if window.document.location.protocol.match(/^https/i) then 'wss://' else 'ws://'
-    ws_etc if window.document.location.host == 'b4u.today' then '/websocket/' else '/'
+    ws_etc = if window.document.location.host == 'b4u.today' then '/websocket/' else '/'
     _t.ws = new WebSocket(ws_schema + window.document.location.host + ws_etc)
 
     _t.ws.onerror = ->
