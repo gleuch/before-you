@@ -5,7 +5,8 @@ Encoding.default_internal = "UTF-8"
 
 
 APP_ROOT  = File.expand_path(File.dirname(__FILE__)) if !defined?(APP_ROOT)
-APP_ENV   = ENV['RACK_ENV'] if !defined?(APP_ENV) && !ENV['RACK_ENV'].nil?
+APP_ENV   = ENV['RACK_ENV'] if !defined?(APP_ENV) && ENV['RACK_ENV']
+APP_ENV   = ENV['APP_ENV'] if !defined?(APP_ENV) && ENV['APP_ENV']
 APP_ENV   = 'development' if !defined?(APP_ENV)
 DEBUG     = false if !defined?(DEBUG)
 
