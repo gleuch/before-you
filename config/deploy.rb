@@ -9,7 +9,7 @@ set :scm, :git
 set :format, :pretty
 set :log_level, :debug
 
-set :linked_files, %w{config/config.yml config/database.yml config/sidekiq.yml}
+set :linked_files, %w{config.ru config/config.yml config/database.yml config/sidekiq.yml}
 set :linked_dirs, %w{log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
 
 set :keep_releases, 5
