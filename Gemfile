@@ -56,5 +56,10 @@ gem 'puma',                     '2.11.2'
 
 # Development, etc. -----------------------------------------------------------
 group :development do
+  gem 'capistrano',                   '3.4.0'
+  gem 'capistrano-rvm',               '0.1.2'
+  gem 'capistrano-bundler',           '1.1.4'
+  gem 'capistrano-sidekiq',           '0.5.2'
+
   gem 'shotgun',                  '0.9.1'
 end

@@ -16,11 +16,11 @@ DEBUG     ||= false
 Dir.glob("#{APP_ROOT}/initializers/*.rb").each{|r| require r}
 
 # CONFIG
-APP_CONFIG = YAML::load(File.open("#{APP_ROOT}/config.yml"))[APP_ENV]
+APP_CONFIG = YAML::load(File.open("#{APP_ROOT}/config/config.yml"))[APP_ENV]
 
 # SETUP DATABASE
 ActiveRecord::Base.raise_in_transactional_callbacks = true
-@DB = ActiveRecord::Base.establish_connection( YAML::load(File.open("#{APP_ROOT}/database.yml"))[APP_ENV] )
+@DB = ActiveRecord::Base.establish_connection( YAML::load(File.open("#{APP_ROOT}/config/database.yml"))[APP_ENV] )
 
 
 # REQUIRE DATABASE MODELS

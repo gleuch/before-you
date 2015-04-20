@@ -6,3 +6,4 @@ database.yml
 sidekiq.yml
 log/*
 .sass-cache/
+config/deploy/production.rb
