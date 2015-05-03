@@ -6,23 +6,3 @@
 
       $(window).one 'b4u:socket:ready', ->
         window.$b4u.getSelf();
-
-
-#before-you-queue.queue-area
-  %ul.queue.list-unstyled
-    - @before_you.each do |loc|
-      %li
-        = loc.address
-        (#{loc.ip_address})
-
-#before-you-about
-  %p
-    You:
-    - if @you.located?
-      - unless @you.reserved?
-        = @you.address
-      - else
-        %span.blink [tracing]
-    - else
-      %span.blink [looking]
-    (#{@you.ip_address})

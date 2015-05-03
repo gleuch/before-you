@@ -4,7 +4,12 @@ window.b4u = ->
   this.prev_id = false
   this.next_id = false
   this.view_date = null
-  this.view_index = 0;
+  this.view_index = 0
+  this.canvas = {
+    step_y : 10
+    step_z : 100
+    step_index : 0
+  }
   this.items = []
   return this
 
@@ -45,39 +50,89 @@ $.extend b4u.prototype, {
 
   # Generate canvas and start processing through items
   start : ->
-    # this.canvas()
+    this.setup_canvas()
 
 
   # Canvas for showing the queue
-  canvas : ->
+  setup_canvas : ->
     _t = this
 
-    canvas = $('<canvas></canvas>').attr('id', 'b4u-canvas')
-    $('body').append(canvas)
+    _t.canvas.element = $('<canvas></canvas>').attr('id', 'b4u-canvas')
+    $('body').append(_t.canvas.element)
 
-    _t.scene = new THREE.Scene()
-    _t.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
-    _t.renderer = new THREE.WebGLRenderer({ canvas: canvas.get(0) })
+    _t.canvas.scene = new THREE.Scene()
+    _t.canvas.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 )
+    _t.canvas.camera.position.y = 0
+    _t.canvas.camera.position.z = 0
 
-    _t.renderer.setSize( window.innerWidth, window.innerHeight )
-    document.body.appendChild( _t.renderer.domElement )
+    _t.canvas.renderer = new THREE.WebGLRenderer({ canvas: _t.canvas.element.get(0) })
+    _t.canvas.mouse = new THREE.Vector2()
 
-    geometry = new THREE.BoxGeometry( 1, 1, 1 )
-    material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
-    cube = new THREE.Mesh( geometry, material )
-    _t.scene.add( cube )
+    _t.canvas.geometry = new THREE.BoxGeometry( 100, 75, 1 )
 
-    _t.camera.position.z = 5
+    _t.canvas.queue = new THREE.Group()
+    for i in [0..9]
+      material = new THREE.MeshNormalMaterial({color: 0xFFFF00, transparent: true, opacity: (10 - i) / 10})
+      mesh = new THREE.Mesh( _t.canvas.geometry, material )
+      mesh.position.x = 0
+      mesh.position.y = 0
+      mesh.position.z = -_t.canvas.step_z * (i + 1)
+      mesh.matrixAutoUpdate = false;
+      mesh.updateMatrix();
+      _t.canvas.queue.add( mesh );
+    _t.canvas.scene.add( _t.canvas.queue )
 
-    render = ->
-      requestAnimationFrame( render )
+    _t.canvas.renderer.setSize( window.innerWidth, window.innerHeight )
+    document.body.appendChild( _t.canvas.renderer.domElement )
 
-      cube.rotation.x += 0.01
-      cube.rotation.y += 0.01
+    $(document)
+      .on 'mousemove', _t.mousemove.bind(this)
+      .on 'keydown', _t.keypress.bind(this)
+    $(window).on 'resize', _t.resize.bind(this)
 
-      _t.renderer.render(_t.scene, _t.camera)
+    _t.animate()
 
-    render()
+
+  #
+  resize : (e)->
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize( window.innerWidth, window.innerHeight );
+
+
+  #
+  mousemove : (e)->
+    e.preventDefault()
+    this.canvas.mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1
+    this.canvas.mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1
+
+  #
+  keypress : (e)->
+    if e.keyCode == 38 || e.keyCode == 40 # Up
+      e.preventDefault()
+      this.move_z e.keyCode 
+
+  #
+  move_z : (c) ->
+    if c == 38 # Up
+      this.canvas.step_index++ unless this.canvas.step_index >= 99 #this.items.length
+    else if c == 40
+      --this.canvas.step_index unless this.canvas.step_index <= 0
+
+    z = -this.canvas.step_z * (this.canvas.step_index - 1)
+    new TWEEN.Tween( this.canvas.camera.position ).to( { z: z }, 250 ).start();
+    
+
+  #
+  animate : ->
+    requestAnimationFrame( this.animate.bind(this) )
+    this.render_canvas()
+
+
+  #
+  render_canvas : ->
+    this.canvas.renderer.render this.canvas.scene, this.canvas.camera
+    TWEEN.update()
 
 
   # Make a WebSocket request

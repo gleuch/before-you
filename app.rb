@@ -37,7 +37,7 @@ module BeforeYou
         serve '/css',    from: 'app/css'       # Default
         serve '/images', from: 'app/images'    # Default
 
-        js :app, '/js/app.js', ['/js/vendor/**/*.js', '/js/lib/**/*.js', '/js/three.min.js', '/js/application.js']
+        js :app, '/js/app.js', ['/js/vendor/*.js', '/js/application.js']
         css :app, '/css/app.css', ['/css/screen.css']
 
         js_compression  :jsmin    # :jsmin | :yui | :closure | :uglify
