@@ -1,3 +1,9 @@
+- content_for :js_header do
+  :coffeescript
+    $ ->
+      window.$b4u.setDate '#{@request_date}'
+      window.$b4u.appendToQueue #{JSON.generate( @before_you.map{|v| v.to_api } )}
+
 %h1
   DATE: 
   = @request_date.to_s

@@ -62,6 +62,8 @@ module BeforeYou
       before do
         @meta_page_title = 'b4u:today'
         @meta_page_desc = ''
+        @meta_canonical_url = request.url
+        @body_class_names = []
       end
 
     end

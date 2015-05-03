@@ -1,3 +1,13 @@
+- content_for :js_header do
+  :coffeescript
+    $ ->
+      window.$b4u.setDate '#{@request_date}'
+      window.$b4u.appendToQueue #{JSON.generate( @before_you.map{|v| v.to_api } )}
+
+      $(window).one 'b4u:socket:ready', ->
+        window.$b4u.getSelf();
+
+
 #before-you-queue.queue-area
   %ul.queue.list-unstyled
     - @before_you.each do |loc|

@@ -3,6 +3,9 @@ window.b4u = ->
   this.ws = false
   this.prev_id = false
   this.next_id = false
+  this.view_date = null
+  this.view_index = 0;
+  this.items = []
   return this
 
 
@@ -22,9 +25,15 @@ $.extend b4u.prototype, {
     ws_etc = if window.document.location.host == 'b4u.today' then '/websocket/' else '/'
     _t.ws = new WebSocket(ws_schema + window.document.location.host + ws_etc)
 
+    _t.ws.onopen = ->
+      $(window).trigger('b4u:socket:ready')
+
+    _t.ws.onclose = ->
+      $(window).trigger('b4u:socket:close')
+
     _t.ws.onerror = ->
+      $(window).trigger('b4u:socket:error')
       console.log(arguments)
-      # alert('Connection Error')
 
     _t.ws.onmessage = (message)->
       try
@@ -32,10 +41,14 @@ $.extend b4u.prototype, {
         _t.response(data)
       catch e
         console.log(arguments)
-        # alert('Unknown error: ' + e)
 
+
+  # Generate canvas and start processing through items
+  start : ->
     # this.canvas()
 
+
+  # Canvas for showing the queue
   canvas : ->
     _t = this
 
@@ -65,7 +78,6 @@ $.extend b4u.prototype, {
       _t.renderer.render(_t.scene, _t.camera)
 
     render()
-
 
 
   # Make a WebSocket request
@@ -104,10 +116,18 @@ $.extend b4u.prototype, {
     console.log('self')
 
 
+  # # Load the previous day
+  # getPreviousDay : ->
+  #
+  # # Load the next day
+  # getNextDay : ->
+  #
+
   # # Paginate previous locations
   # getPrevious : ->
   #   this.request {
-  #     action : 'previous'
+  #     action : 'previous',
+  #     date : '',
   #     id : this.prev_id
   #   }
   # 
@@ -118,19 +138,33 @@ $.extend b4u.prototype, {
   # # Paginate next locations
   # getNext : ->
   #   this.request {
-  #     action : 'next'
+  #     action : 'next',
+  #     date : '',
   #     id : this.next_id
   #   }
   # 
   # respondNext : (data)->
   #    alert('next')
 
+
+  # --- UTILITIES ---
+  setDate : (d) ->
+    this.view_date = Date.parse d
+
+  appendToQueue : (items) ->
+    Array.prototype.push.apply(this.items, items)
+
+  prependToQueue : (items) ->
+    Array.prototype.unshift.apply(this.items, items)
+    this.view_index += items.length;
+
 }
 
 
+# Start it up
 $ ->
   window.$b4u = new b4u();
   window.$b4u.load()
-  setTimeout ->
-    window.$b4u.getSelf()
-  , 500
+  
+  $(document).ready ->
+    window.$b4u.start()

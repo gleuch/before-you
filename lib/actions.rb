@@ -5,7 +5,7 @@ module BeforeYou
     get '/about' do
       respond_to do |format|
         format.html {
-          @meta_page_title = "about b4u:today"
+          @meta_page_title = 'about b4u:today'
 
           haml :'about.html', layout: :'layout.html'
         }
@@ -19,7 +19,7 @@ module BeforeYou
 
       respond_to do |format|
         format.html {
-          @meta_page_title = "b4u:" << @request_date.strftime('%d %b %Y')
+          @meta_page_title = 'b4u:' << @request_date.strftime('%d %b %Y')
 
           @before_you = Location.on(@request_date).completed.limit(10)
 
@@ -35,6 +35,8 @@ module BeforeYou
       ip = request.ip
       ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
 
+      @request_date = Date.today
+
       @you = Location.where(ip_address: ip).first_or_create do |u|
         u.ip_address = ip
         u.useragent = request.user_agent
@@ -43,6 +45,8 @@ module BeforeYou
       # Show them who was before them
       respond_to do |format|
         format.html {
+          @meta_page_title = 'b4u:today'
+          
           # Track the impression of "you"
           @you.impression!
 

@@ -8,8 +8,8 @@
     %meta{content: '', name: 'keywords'}
     %meta{content: 'US', name: 'language'}
     %meta{content: 'en-us', itemprop: 'inLanguage'}
-    %meta{content: '/', name: 'url'}
-    %link{href: '', rel: 'canonical'}
+    %meta{content: @meta_canonical_url, name: 'url'}
+    %link{href: @meta_canonical_url, rel: 'canonical'}
     %link{href: '/about', rel: 'help'}
     %link{href: '/', rel: 'Start'}
     %meta{content: 'Copyright 2015 Greg Leuch, unless noted differently.', name: 'copyright'}
@@ -24,8 +24,8 @@
     %meta{content: 'b4u:today', name: 'generator'}
     %link{crossOrigin: '', href: '/favicon.png', rel: 'shortcut icon', type: 'image/png'}
     %link{href: '/images/share/logo.png', rel: 'image_src'}
-    %meta{content: 'b4u.today', property: 'og:site_name'}
-    %meta{content: request.url, property: 'og:url'}
+    %meta{content: 'b4u:today', property: 'og:site_name'}
+    %meta{content: @meta_canonical_url, property: 'og:url'}
     %meta{content: @meta_page_title, property: 'og:title'}
     %meta{content: @meta_page_desc, property: 'og:description'}
     %meta{content: '/images/share/logo.png', property: 'og:image'}
@@ -44,20 +44,21 @@
     != js :app
     != css :app
 
-    <script>
-    var ga = function() {
+    :javascript
+      var ga = function() {
 
-    };
-    ga("create", "UA-", "auto")// ;
-    ga("send", "pageview");
-    </script>
+      };
+      ga("create", "UA-", "auto");
+      ga("send", "pageview");
 
-  %body
+    = yield_content :js_header
+
+  %body{class: @body_class_names.join(' ')}
     #container
       %nav#nav
         %ul
           %li
-            %a.icon.icon-about{href: '#about'} About Before You
+            %a.icon.icon-about{href: '/about'} About b4u
           %li#credit
             %a.icon.icon-signature{href: 'https://gleu.ch', target: '_blank'} Created by <span class="normalcase">Greg Leuch</span>
 
@@ -65,7 +66,7 @@
 
       %aside
         #about
-          %h1 Before You
+          %h1 b4u
           %h5 Greg Leuch, Internet, 2015
           
           %p This is information about the piece.
