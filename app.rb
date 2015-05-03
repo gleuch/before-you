@@ -15,62 +15,55 @@ module BeforeYou
       DEBUG = false
       TIME_START = Time.now
 
-      require "#{APP_ROOT}/config.rb"
+      require File.join(APP_ROOT, 'config.rb')
+
+      if ENV['DEBUG'] == '1'
+        require 'sinatra/reloader'
+        register Sinatra::Reloader
+        enable :reloader
+      end
+
       require 'sinatra/content_for'
       require 'sinatra/respond_with'
 
       helpers Sinatra::ContentFor
       register Sinatra::RespondWith
 
+
+      # --- ASSETS ------------------------------
       register Sinatra::AssetPack
       assets {
         serve '/js',     from: 'app/js'        # Default
         serve '/css',    from: 'app/css'       # Default
         serve '/images', from: 'app/images'    # Default
 
-        js :app, '/js/app.js', ['/js/vendor/**/*.js', '/js/lib/**/*.js', '/js/application.js']
+        js :app, '/js/app.js', ['/js/vendor/**/*.js', '/js/lib/**/*.js', '/js/three.min.js', '/js/application.js']
         css :app, '/css/app.css', ['/css/screen.css']
 
         js_compression  :jsmin    # :jsmin | :yui | :closure | :uglify
         css_compression :sass   # :simple | :sass | :yui | :sqwish
       }
 
-
+      # --- SESSIONS ----------------------------
       # FLASH_TYPES = [:warning, :notice, :success, :error]
       # use Rack::Session::Cookie, key: 'beforeyou_rack_key', secret: '0hN0aft3ryu0plz1insi5t', path: '/', expire_after: 21600
       # set :sessions => true
 
-      # --- I18N -------------------------------
+
+      # --- I18N --------------------------------
       # register Sinatra::R18n
       # set :default_locale, 'en'
       # set :translations,   './i18n'
-    end
 
 
-    # Homepage
-    get '/' do
-      # Get "you", based on your IP address
-      ip = request.ip
-      ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
+      # --- ACTIONS -----------------------------
+      require File.join(APP_ROOT, 'lib/actions.rb')
 
-      @you = Location.where(ip_address: ip).first_or_create do |u|
-        u.ip_address = ip
-        u.useragent = request.user_agent
+      before do
+        @meta_page_title = 'b4u:today'
+        @meta_page_desc = ''
       end
 
-      # Show them who was before them
-      respond_to do |format|
-        format.html {
-          # Track the impression of "you"
-          @you.impression!
-
-          # Get the person before you
-          @before_you = Location.latest.completed.limit(10)
-
-          haml :'index.html', layout: :'layout.html'
-        }
-      end
     end
-
   end
 end

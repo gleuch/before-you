@@ -29,9 +29,10 @@ class Location < ActiveRecord::Base
   # Scopes --------------------------------------------------------------------
 
   scope :located,   -> { where('country IS NOT NULL AND lat IS NOT NULL AND lng IS NOT NULL') }
-  scope :pictured,  -> {where('image_file_name IS NOT NULL AND image_file_size > 0') }
+  scope :pictured,  -> { where('image_file_name IS NOT NULL AND image_file_size > 0') }
   scope :completed, -> { located.pictured }
   scope :latest,    -> { order('created_at DESC') }
+  scope :on,        -> (v) { where('DATE(created_at) = ?', v) }
   default_scope     -> { where(active: true) }
 
 
@@ -155,9 +156,14 @@ class Location < ActiveRecord::Base
   end
 
 
-  # Call delayed geo_ and photo_ locate methods from record
-  def geo_locate; self.class.delay_for(1.second).geo_locate(self.id); end
-  def photo_locate; self.class.delay_for(1.second).photo_locate(self.id); end
+  # Call delayed geo_* and photo_* locate methods from record
+  def geo_locate
+    self.class.delay_for(1.second).geo_locate(self.id)
+  end
+
+  def photo_locate
+    self.class.delay_for(1.second).photo_locate(self.id)
+  end
   
 
 protected

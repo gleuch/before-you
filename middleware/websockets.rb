@@ -20,6 +20,7 @@ module BeforeYou
       end
     end
 
+    # On request
     def call(env)
       if Faye::WebSocket.websocket?(env)
         ws = Faye::WebSocket.new(env, nil, {ping: 15})

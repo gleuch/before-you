@@ -34,6 +34,39 @@ $.extend b4u.prototype, {
         console.log(arguments)
         # alert('Unknown error: ' + e)
 
+    # this.canvas()
+
+  canvas : ->
+    _t = this
+
+    canvas = $('<canvas></canvas>').attr('id', 'b4u-canvas')
+    $('body').append(canvas)
+
+    _t.scene = new THREE.Scene()
+    _t.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
+    _t.renderer = new THREE.WebGLRenderer({ canvas: canvas.get(0) })
+
+    _t.renderer.setSize( window.innerWidth, window.innerHeight )
+    document.body.appendChild( _t.renderer.domElement )
+
+    geometry = new THREE.BoxGeometry( 1, 1, 1 )
+    material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
+    cube = new THREE.Mesh( geometry, material )
+    _t.scene.add( cube )
+
+    _t.camera.position.z = 5
+
+    render = ->
+      requestAnimationFrame( render )
+
+      cube.rotation.x += 0.01
+      cube.rotation.y += 0.01
+
+      _t.renderer.render(_t.scene, _t.camera)
+
+    render()
+
+
 
   # Make a WebSocket request
   request : (data)->
@@ -59,7 +92,7 @@ $.extend b4u.prototype, {
 
   # Get latest
   respondLatest : (data)->
-    alert('latest')
+    console.log('latest')
 
   # Get information about self, if processing
   getSelf : ->
@@ -68,7 +101,7 @@ $.extend b4u.prototype, {
     }
 
   respondSelf : (data)->
-    alert('self')
+    console.log('self')
 
 
   # # Paginate previous locations

@@ -1,0 +1,10 @@
+%h1
+  DATE: 
+  = @request_date.to_s
+
+#before-you-queue.queue-area
+  %ul.queue.list-unstyled
+    - @before_you.each do |loc|
+      %li
+        = loc.address
+        (#{loc.ip_address})
