@@ -21,7 +21,8 @@ module BeforeYou
         format.html {
           @meta_page_title = 'b4u:' << @request_date.strftime('%d %b %Y')
 
-          @before_you = Location.on(@request_date).completed.limit(10)
+          @before_you = Location.on(@request_date).latest.completed.limit(10)
+          @before_you_day_count = Location.on(@request_date).completed.count
 
           haml :'date.html', layout: :'layout.html'
         }
@@ -51,7 +52,8 @@ module BeforeYou
           @you.impression!
 
           # Get the person before you
-          @before_you = Location.latest.completed.limit(10)
+          @before_you = Location.on(@request_date).latest.completed.limit(10)
+          @before_you_day_count = Location.on(@request_date).completed.count
 
           haml :'index.html', layout: :'layout.html'
         }

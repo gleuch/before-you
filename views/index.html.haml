@@ -2,6 +2,7 @@
   :coffeescript
     $ ->
       window.$b4u.setDate '#{@request_date}'
+      window.$b4u.day_total = @before_you_day_count
       window.$b4u.appendToQueue #{JSON.generate( @before_you.map{|v| v.to_api } )}
 
       $(window).one 'b4u:socket:ready', ->
