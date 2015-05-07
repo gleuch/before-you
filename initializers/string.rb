@@ -11,4 +11,10 @@ class String
     self.encode(Encoding.find('ASCII'), {:invalid => :replace, :undef => :replace, :replace => r, :universal_newline => true})
   end
 
+  def to_hex
+    self.to_i.to_s(16).upcase
+  rescue
+    0.to_s(16)
+  end
+
 end

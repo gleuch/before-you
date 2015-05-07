@@ -105,7 +105,7 @@ $.extend b4u.prototype, {
   #
   drawItem : (n,i) ->
     color = '#' + n.color.hex
-    material = new THREE.MeshNormalMaterial { color: color, transparent: true, alpha: n.color.alpha }
+    material = new THREE.MeshBasicMaterial { color: color, transparent: true, opacity: n.color.alpha / 255 }
     mesh = new THREE.Mesh this.canvas.geometry, material
     mesh.uuid = n.id
     mesh.position.x = 0
@@ -152,14 +152,20 @@ $.extend b4u.prototype, {
   keypress : (e)->
     if e.keyCode == 38 || e.keyCode == 40 # Up
       e.preventDefault()
-      this.move_z e.keyCode
+      this.move_z e
 
   #
-  move_z : (c) ->
-    if c == 38 # Up
-      this.canvas.step_index++ if (this.items.length - 1) > this.canvas.step_index
-    else if c == 40
-      --this.canvas.step_index if this.canvas.step_index > 0
+  move_z : (e) ->
+    i = 1
+    i = 10 if e.shiftKey # Skip 10 at time if shiftkey pressed
+
+    if e.keyCode == 38 # Up
+      this.canvas.step_index += i if (this.items.length - 1) > this.canvas.step_index
+    else if e.keyCode == 40
+      this.canvas.step_index -= i if this.canvas.step_index > 0
+
+    # Normalize
+    this.canvas.step_index = Math.min((this.items.length - 1), Math.max(0, this.canvas.step_index))
 
     z = -this.canvas.step_z * this.canvas.step_index
 

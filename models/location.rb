@@ -157,9 +157,9 @@ class Location < ActiveRecord::Base
   end
 
   def color
-    ip = self.ip_address.split('.').map{|v| v.to_i}
+    ip = self.ip_address.split('.').shuffle
     {
-      hex:    [ip[0].to_s(16).upcase, ip[1].to_s(16).upcase, ip[2].to_s(16).upcase].join(''),
+      hex:    [ip[0].to_hex, ip[1].to_hex, ip[2].to_hex].join(''),
       alpha:  ip[3]
     }
   end
