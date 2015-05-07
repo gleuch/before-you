@@ -36,7 +36,7 @@ module BeforeYou
       ip = request.ip
       ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
 
-      @request_date = Date.today
+      @request_date = Time.now.utc.to_date
 
       @you = Location.where(ip_address: ip).first_or_create do |u|
         u.ip_address = ip
@@ -52,7 +52,7 @@ module BeforeYou
           @you.impression!
 
           # Get the person before you
-          @before_you = Location.on(@request_date).latest.completed.limit(10)
+          @before_you = Location.on(@request_date).latest.completed.limit(100)
           @before_you_day_count = Location.on(@request_date).completed.count
 
           haml :'index.html', layout: :'layout.html'

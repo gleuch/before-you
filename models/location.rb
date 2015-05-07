@@ -139,11 +139,12 @@ class Location < ActiveRecord::Base
   # Data to return
   def to_api
     {
-      id: self.uuid,
-      lat: self.lat,
-      lng: self.lng,
-      country: self.country,
-      address: self.address,
+      id:       self.uuid,
+      lat:      self.lat,
+      lng:      self.lng,
+      country:  self.country,
+      address:  self.address,
+      color:    color,
       image: {
         url:          self.image.url,
         source_url:   self.image_source_url,
@@ -152,6 +153,14 @@ class Location < ActiveRecord::Base
         license:      self.image_attribute_license,
         taken_at:     self.image_attribute_taken_at
       }      
+    }
+  end
+
+  def color
+    ip = self.ip_address.split('.').map{|v| v.to_i}
+    {
+      hex:    [ip[0].to_s(16).upcase, ip[1].to_s(16).upcase, ip[2].to_s(16).upcase].join(''),
+      alpha:  ip[3]
     }
   end
 

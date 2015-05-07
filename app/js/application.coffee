@@ -104,7 +104,8 @@ $.extend b4u.prototype, {
 
   #
   drawItem : (n,i) ->
-    material = new THREE.MeshNormalMaterial { color: 0xFFFF00, transparent: true }
+    color = '#' + n.color.hex
+    material = new THREE.MeshNormalMaterial { color: color, transparent: true, alpha: n.color.alpha }
     mesh = new THREE.Mesh this.canvas.geometry, material
     mesh.uuid = n.id
     mesh.position.x = 0

@@ -61,5 +61,6 @@ group :development do
   gem 'capistrano-bundler',           '1.1.4'
   gem 'capistrano-sidekiq',           '0.5.2'
 
+  gem 'sqlite3'
   gem 'shotgun',                  '0.9.1'
 end

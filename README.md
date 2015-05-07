@@ -2,6 +2,11 @@
 
 
 
+### Dev Mode
+
+To run:
+
+`DEBUG=1 rackup ./config.ru`
 
 
 ### Credits
