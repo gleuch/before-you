@@ -1,6 +1,5 @@
 # encoding: UTF-8
 
-puts File.join( File.expand_path(File.dirname(__FILE__)), '..' , 'config.rb')
 require File.join( File.expand_path(File.dirname(__FILE__)), '..' , 'config.rb')
 
 (0..25).each do

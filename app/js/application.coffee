@@ -105,11 +105,20 @@ $.extend b4u.prototype, {
   #
   drawItem : (n,i) ->
     color = '#' + n.color.hex
-    material = new THREE.MeshBasicMaterial { color: color, transparent: true, opacity: n.color.alpha / 255 }
+    opac = n.color.alpha / 255
+    opac = 255
+    texture = THREE.ImageUtils.loadTexture n.image.url
+    texture.anisotropy = this.canvas.renderer.getMaxAnisotropy()
+    material = new THREE.MeshBasicMaterial {
+      map : texture
+      # color: color
+      # transparent: true
+      opacity: opac
+    }
     mesh = new THREE.Mesh this.canvas.geometry, material
     mesh.uuid = n.id
-    mesh.position.x = 0
-    mesh.position.y = 0
+    mesh.position.x = n.x
+    mesh.position.y = n.y
     mesh.position.z = -this.canvas.step_z * (i + 1)
     mesh.matrixAutoUpdate = false
     mesh.updateMatrix()
@@ -136,6 +145,8 @@ $.extend b4u.prototype, {
     # # DRAW TIMELINE
     # this.canvas.scene.add this.canvas.timeline
 
+    this.changeBackground() if this.items.length > 0
+
   #
   resize : (e)->
     this.canvas.camera.aspect = window.innerWidth / window.innerHeight
@@ -158,6 +169,7 @@ $.extend b4u.prototype, {
   move_z : (e) ->
     i = 1
     i = 10 if e.shiftKey # Skip 10 at time if shiftkey pressed
+    oldStep = this.canvas.step_index + 0
 
     if e.keyCode == 38 # Up
       this.canvas.step_index += i if (this.items.length - 1) > this.canvas.step_index
@@ -168,8 +180,22 @@ $.extend b4u.prototype, {
     this.canvas.step_index = Math.min((this.items.length - 1), Math.max(0, this.canvas.step_index))
 
     z = -this.canvas.step_z * this.canvas.step_index
+    y = this.items[this.canvas.step_index].y
+    x = this.items[this.canvas.step_index].x
 
-    new TWEEN.Tween( this.canvas.camera.position ).to( { z: z }, 250 ).start();
+    this.changeBackground() unless oldStep == this.canvas.step_index
+
+    new TWEEN.Tween( this.canvas.camera.position ).to( { z: z, x : x, y : y }, 250 ).start();
+
+  changeBackground : (fwd) ->
+    try 
+      img = this.items[ this.canvas.step_index ].image.url
+      el = $('.canvas-bg:not(.current)').eq(0)
+      $('.canvas-bg.current').removeClass('current')
+      el.css('background-image', 'url(' + img + ')').addClass('current')
+    catch e
+      #
+    
 
   #
   animate : ->
@@ -242,10 +268,30 @@ $.extend b4u.prototype, {
   setDate : (d) ->
     this.view_date = Date.parse d
 
+  assignCoords : (items, startN) ->
+    startX = 0
+    startY = 0
+    startX = this.items[startN].x if this.items[startN]
+    startY = this.items[startN].y if this.items[startN]
+
+    # For now, linear
+    # TODO : CURVE IT
+    incrX = Math.ceil(Math.random() * 100) - 50
+    incrY = Math.ceil(Math.random() * 100) - 50
+
+    $.map items, (n,i)->
+      n.x = startX + (incrX * i) if !n.x
+      n.y = startY + (incrY * i) if !n.y
+      return this
+
+    items
+
   appendToQueue : (items) ->
+    items = this.assignCoords(items, this.items.length)
     Array.prototype.push.apply(this.items, items)
 
   prependToQueue : (items) ->
+    items = this.assignCoords(items.reverse(), 0).reverse() # reverse the order and then back
     Array.prototype.unshift.apply(this.items, items)
     this.canvas.step_index += items.length
 

@@ -146,7 +146,7 @@ class Location < ActiveRecord::Base
       address:  self.address,
       color:    color,
       image: {
-        url:          self.image.url,
+        url:          "/images/test/image-#{self.id % 5}.jpg", #self.image.url,
         source_url:   self.image_source_url,
         owner:        self.image_attribute_owner_name,
         title:        self.image_attribute_title,

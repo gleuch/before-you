@@ -13,9 +13,9 @@ module BeforeYou
     end
 
     # Show previous day
-    get '/:year/:month/:day' do
-      date_str = [:year,:month,:day].map{|v| params[v]}
-      @request_date = Date.parse(date_str.join('-'))
+    get %r{/(2015)/(\d{2})/(\d{2})} do |y,m,d|
+      date_str = [y,m,d].join('-')
+      @request_date = Date.parse(date_str)
 
       respond_to do |format|
         format.html {
@@ -34,7 +34,7 @@ module BeforeYou
     get '/' do
       # Get "you", based on your IP address
       ip = request.ip
-      ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
+      ip = [rand(255),rand(255),rand(255),rand(255)].join('.') if ['::1','127.0.0.1'].include?(ip) # DEBUG
 
       @request_date = Time.now.utc.to_date
 

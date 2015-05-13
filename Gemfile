@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 
 # Core ------------------------------------------------------------------------
-gem 'rack',                     '1.6.0'
+gem 'rack',                     '1.6.1'
 gem 'rake',                     '10.4.2'
 gem 'mysql2',                   '0.3.18',     require: false
 
@@ -42,7 +42,7 @@ gem 'geocoder',                 '1.2.8'
 
 # API Intgrations -------------------------------------------------------------
 gem 'flickraw',                 '0.9.8'
-gem 'aws-sdk',                  '2.0.41'
+gem 'aws-sdk',                  '2.0.42'
 
 
 # Queue -----------------------------------------------------------------------
@@ -61,6 +61,6 @@ group :development do
   gem 'capistrano-bundler',           '1.1.4'
   gem 'capistrano-sidekiq',           '0.5.2'
 
-  gem 'sqlite3'
+  gem 'sqlite3',                  '1.3.10'
   gem 'shotgun',                  '0.9.1'
 end

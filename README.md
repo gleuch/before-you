@@ -6,7 +6,7 @@
 
 To run:
 
-`DEBUG=1 rackup ./config.ru`
+`DEBUG=1 rackup config.ru -s puma -E production -p 9292`
 
 
 ### Credits
