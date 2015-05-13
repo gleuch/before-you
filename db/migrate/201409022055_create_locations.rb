@@ -13,8 +13,11 @@ class CreateLocations < ActiveRecord::Migration
       t.integer     :image_file_size
       t.string      :image_content_type
       t.datetime    :image_updated_at
+      t.integer     :image_dimensions_width
+      t.integer     :image_dimensions_height
       t.string      :image_source_url
       t.string      :image_attribute_id
+      t.string      :image_attribute_secret
       t.string      :image_attribute_owner_id
       t.string      :image_attribute_owner_name
       t.integer     :image_attribute_license

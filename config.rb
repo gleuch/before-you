@@ -12,7 +12,7 @@ DEBUG     = false if !defined?(DEBUG)
 
 
 # REQUIRE MODULES/GEMS
-%w{yaml json active_record active_support/all addressable/uri paperclip friendly_id geocoder geocoder/models/active_record mysql2 flickraw sidekiq}.each{|r| require r}
+%w{yaml json active_record active_support/all addressable/uri paperclip paperclip/rack friendly_id geocoder geocoder/models/active_record mysql2 flickraw sidekiq}.each{|r| require r}
 
 # INITIALIZERS
 Dir.glob("#{APP_ROOT}/initializers/*.rb").each{|r| require r}

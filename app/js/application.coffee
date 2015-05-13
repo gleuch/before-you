@@ -104,6 +104,13 @@ $.extend b4u.prototype, {
 
   #
   drawItem : (n,i) ->
+    # Preload image
+    img = new Image
+    img.onload = ->
+      console.log('preloaded', n.image.url)
+    img.src = n.image.url
+
+    # Set and load material
     color = '#' + n.color.hex
     opac = n.color.alpha / 255
     opac = 255
@@ -116,12 +123,16 @@ $.extend b4u.prototype, {
       opacity: opac
     }
     mesh = new THREE.Mesh this.canvas.geometry, material
+
+    # Assign attributes
     mesh.uuid = n.id
     mesh.position.x = n.x
     mesh.position.y = n.y
     mesh.position.z = -this.canvas.step_z * (i + 1)
     mesh.matrixAutoUpdate = false
     mesh.updateMatrix()
+
+    # Add to canvas
     this.canvas.queue.add mesh
 
   #

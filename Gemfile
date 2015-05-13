@@ -23,6 +23,7 @@ gem 'activerecord',             '4.2.1'
 gem 'sinatra-activerecord',     '2.0.6'
 gem 'activesupport',            '4.2.1'
 gem 'paperclip',                '4.2.1'
+gem 'paperclip-rack',           '0.0.2'
 gem 'friendly_id',              '5.1.0'
 
 

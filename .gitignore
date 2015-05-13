@@ -8,3 +8,4 @@ log/*
 .sass-cache/
 config/deploy/production.rb
 config.ru
+public/system

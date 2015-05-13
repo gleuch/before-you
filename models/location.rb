@@ -19,17 +19,21 @@ class Location < ActiveRecord::Base
 
   # Validations & Callbacks ---------------------------------------------------
 
+  attr_accessor :image_remote_url
+
   validates :ip_address, presence: true #format: {with: /\A(?>(?>([a-f0-9]{1,4})(?>:(?1)){7}|(?!(?:.*[a-f0-9](?>:|$)){8,})((?1)(?>:(?1)){0,6})?::(?2)?)|(?>(?>(?1)(?>:(?1)){5}:|(?!(?:.*[a-f0-9]:){6,})(?3)?::(?>((?1)(?>:(?1)){0,4}):)?)?(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?>\.(?4)){3}))\z/i}
   validates :useragent, presence: true, length: {minimum: 2}
   validates_attachment_content_type :image, content_type: /\Aimage\/.*\z/
 
+  before_validation :image_from_url
+  before_save :extract_dimensions
   after_create :geo_locate
 
 
   # Scopes --------------------------------------------------------------------
 
   scope :located,   -> { where('country IS NOT NULL AND lat IS NOT NULL AND lng IS NOT NULL') }
-  scope :pictured,  -> { } # where('image_file_name IS NOT NULL AND image_file_size > 0') }
+  scope :pictured,  -> { where('image_file_name IS NOT NULL AND image_file_size > 0') }
   scope :completed, -> { located.pictured }
   scope :latest,    -> { order('created_at DESC') }
   scope :on,        -> (v) { where('DATE(created_at) = ?', v) }
@@ -67,20 +71,59 @@ class Location < ActiveRecord::Base
       loc.publish_redis_status(:updated)
 
     else
-      raise "Unable to locate #{loc.ip_address}"
+      puts "Unable to locate #{loc.ip_address}"
+      raise
     end
   end
 
 
   # STEP 2: Get picture from Flickr based on location
   def self.photo_locate(id)
-    loc = find(id) rescue nil
+    page = 1
+    loc = located.find(id) rescue nil
     return if loc.blank?
 
-    # Flickr photo here
-    #photos = flickr.photos.search(lat: loc.lat, lon: loc.lng, license: '1,2,3,4,5,6,7,8')
+    # Do initial search for photos
+    photos = flickr.photos.search(page: page, lat: loc.lat, lon: loc.lng, accuracy: 11, safe_search: 2, content_type: 1, license: '1,2,3,4,5,6,7,8,9,10')
+    raise unless photos.count > 0
 
+    # Lets get from a different page if random page is > 1
+    page = rand(photo.pages) if photos.page > 1
+    photos = flickr.photos.search(page: page, lat: loc.lat, lon: loc.lng, accuracy: 9, safe_search: 2, content_type: 1, license: '1,2,3,4,5,6,7,8,9,10') if page > 1
+
+    # Get photo
+    selected_photo = photos.to_a.shuffle.first
+    info = flickr.photos.getInfo(photo_id: selected_photo['id'], secret: selected_photo['secret'])
+    sizes = flickr.photos.getSizes(photo_id: selected_photo['id'], secret: selected_photo['secret'])
+    
+    # Assign photo
+    source = nil
+    ['Original', 'Large'].each do |s|
+      sizes.each{|i| source = i['source'] if i['label'] == s}
+      break unless source.blank?
+    end
+    raise if source.blank? # try again
+
+    # Update with source info
+    raise unless loc.update(
+      image_remote_url:           source,
+      image_source_url:           source,
+      image_attribute_id:         info['id'],
+      image_attribute_secret:     info['secret'],
+      image_attribute_owner_id:   info['owner']['nsid'],
+      image_attribute_owner_name: info['owner']['username'],
+      image_attribute_license:    info['license'],
+      image_attribute_title:      info['title'],
+      image_attribute_taken_at:   info['dates']['taken'] || info['dates']['posted'],
+      image_attribute_url:        "https://www.flickr.com/photos/#{info['owner']['username']}/#{info['id']}"
+    )
+
+    # Publish photo
     loc.publish_redis_status(:updated, :completed)
+
+  rescue => err
+    puts "ERROR: #{err}"
+    return false
   end
 
 
@@ -146,8 +189,9 @@ class Location < ActiveRecord::Base
       address:  self.address,
       color:    color,
       image: {
-        url:          "/images/test/image-#{self.id % 5}.jpg", #self.image.url,
+        url:          self.image.url,
         source_url:   self.image_source_url,
+        link_url:     self.image_attribute_url,
         owner:        self.image_attribute_owner_name,
         title:        self.image_attribute_title,
         license:      self.image_attribute_license,
@@ -176,5 +220,37 @@ class Location < ActiveRecord::Base
   
 
 protected
+
+  def extract_dimensions
+    return unless image?
+    tempfile = image.queued_for_write[:original]
+    unless tempfile.nil?
+      geometry = Paperclip::Geometry.from_file(tempfile)
+      self.image_dimensions_width = geometry.width.to_i
+      self.image_dimensions_height = geometry.height.to_i
+    end
+  end
+
+  def image_from_url
+    return if image_remote_url.blank?
+
+    begin
+      uri = Addressable::URI.parse(image_remote_url)
+      Timeout::timeout(30) do # 30 seconds
+        io = open(uri, read_timeout: 30, "User-Agent" => 'b4u.today', allow_redirections: :all)
+        io.class_eval { attr_accessor :original_filename }
+        raise "invalid content-type" unless io.content_type.match(/^image\//i)
+        io.original_filename = File.basename(uri.path)
+        self.image = io
+      end
+    rescue OpenURI::HTTPError => err
+      self.errors.add(:image, "unable to retrieve from URL #{image_remote_url} [e:1]")
+    rescue Timeout::Error => err
+      self.errors.add(:image, "unable to retrieve from URL #{image_remote_url} [e:2]")
+    rescue => err
+      self.errors.add(:image, "unable to retrieve from URL #{image_remote_url} (#{err})")
+    end
+  end
+
 
 end
