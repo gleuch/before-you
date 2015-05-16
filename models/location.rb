@@ -11,7 +11,7 @@ class Location < ActiveRecord::Base
   friendly_id :uuid, use: [:finders]
 
   include Paperclip::Glue
-  has_attached_file :image, styles: {}
+  has_attached_file :image, styles: {large: ["800x600>",:jpg]}
 
 
   # Associations --------------------------------------------------------------
@@ -87,16 +87,19 @@ class Location < ActiveRecord::Base
     photos = flickr.photos.search(page: page, lat: loc.lat, lon: loc.lng, accuracy: 11, safe_search: 2, content_type: 1, license: '1,2,3,4,5,6,7,8,9,10')
     raise unless photos.count > 0
 
-    # Lets get from a different page if random page is > 1
-    page = rand(photo.pages) if photos.page > 1
-    photos = flickr.photos.search(page: page, lat: loc.lat, lon: loc.lng, accuracy: 9, safe_search: 2, content_type: 1, license: '1,2,3,4,5,6,7,8,9,10') if page > 1
+    # Lets get from a different page if random page is > 1. Continue on if error, as this is just to make results more interesting
+    begin
+      page = rand(photo.pages) if photos.page > 1
+      photos = flickr.photos.search(page: page, lat: loc.lat, lon: loc.lng, accuracy: 9, safe_search: 2, content_type: 1, license: '1,2,3,4,5,6,7,8,9,10') if page > 1
+    rescue
+    end
 
     # Get photo
     selected_photo = photos.to_a.shuffle.first
     info = flickr.photos.getInfo(photo_id: selected_photo['id'], secret: selected_photo['secret'])
     sizes = flickr.photos.getSizes(photo_id: selected_photo['id'], secret: selected_photo['secret'])
     
-    # Assign photo
+    # Assign photo, try to get largest sizes
     source = nil
     ['Original', 'Large'].each do |s|
       sizes.each{|i| source = i['source'] if i['label'] == s}
@@ -189,13 +192,17 @@ class Location < ActiveRecord::Base
       address:  self.address,
       color:    color,
       image: {
-        url:          self.image.url,
+        url:          self.image.url(:large),
         source_url:   self.image_source_url,
         link_url:     self.image_attribute_url,
         owner:        self.image_attribute_owner_name,
         title:        self.image_attribute_title,
         license:      self.image_attribute_license,
-        taken_at:     self.image_attribute_taken_at
+        taken_at:     self.image_attribute_taken_at,
+        dimensions:   {
+          width:      self.image_dimensions_width,
+          height:     self.image_dimensions_height
+        }
       }      
     }
   end
