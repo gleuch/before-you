@@ -21,8 +21,8 @@ module BeforeYou
         format.html {
           @meta_page_title = 'b4u:' << @request_date.strftime('%d %b %Y')
 
-          @before_you = Location.on(@request_date).latest.completed.limit(10)
-          @before_you_day_count = Location.on(@request_date).completed.count
+          @before_you = Visit.on(@request_date).latest.completed.limit(10)
+          @before_you_day_count = Visit.on(@request_date).completed.count
 
           haml :'date.html', layout: :'layout.html'
         }
@@ -38,22 +38,17 @@ module BeforeYou
 
       @request_date = Time.now.utc.to_date
 
-      @you = Location.where(ip_address: ip).first_or_create do |u|
-        u.ip_address = ip
-        u.useragent = request.user_agent
-      end
+      @you = Location.where(ip_address: ip).first_or_create{|l| l.ip_address = ip}
+      @you.visit(useragent: request.user_agent)
 
       # Show them who was before them
       respond_to do |format|
         format.html {
           @meta_page_title = 'b4u:today'
-          
-          # Track the impression of "you"
-          @you.impression!
 
           # Get the person before you
-          @before_you = Location.on(@request_date).latest.completed.limit(100)
-          @before_you_day_count = Location.on(@request_date).completed.count
+          @before_you = Visit.on(@request_date).latest.completed.limit(100)
+          @before_you_day_count = Visit.on(@request_date).completed.count
 
           haml :'index.html', layout: :'layout.html'
         }

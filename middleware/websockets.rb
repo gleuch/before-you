@@ -62,18 +62,18 @@ module BeforeYou
     def get_current_location(ws,ip)
       ip = '50.14.165.216' if ['::1','127.0.0.1'].include?(ip) # DEBUG
 
-      loc = Location.where(ip_address: ip).first rescue nil
-      return if loc.blank?
+      visit = Visit.where(ip_address: ip).last rescue nil
+      return if visit.blank? || visit.location.blank?
 
       # If location is completed, then return immediately
-      if loc.completed?
-        ws.send( JSON.generate( {action: 'self', data: loc.to_api} ) )
+      if visit.location.completed?
+        ws.send( JSON.generate( {action: 'self', data: visit.to_api} ) )
 
       # Otherwise subscribe to thread to get updates
       else
         Thread.new do
           redis_sub = Redis.new(host: @redis_uri.host, port: @redis_uri.port, password: @redis_uri.password)
-          redis_sub.subscribe(loc.redis_channel) do |on|
+          redis_sub.subscribe(visit.location.redis_channel) do |on|
             on.message do |channel, msg|
               ws.send( JSON.generate({action: 'self', data: JSON.parse(msg)}) )
             end
