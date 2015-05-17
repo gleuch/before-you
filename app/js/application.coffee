@@ -83,10 +83,14 @@ $.extend b4u.prototype, {
     $('body').append(_t.canvas.element)
 
     _t.canvas.scene = new THREE.Scene()
-    _t.canvas.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 )
+    _t.canvas.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, .1, 100000 )
     _t.canvas.renderer = new THREE.WebGLRenderer({ alpha: true, canvas: _t.canvas.element.get(0) })
     _t.canvas.mouse = new THREE.Vector2()
     _t.canvas.geometry = new THREE.BoxGeometry( 100, 75, 1 )
+    _t.canvas.geometry.computeBoundingBox()
+    _t.canvas.geometry.width = _t.canvas.geometry.boundingBox.max.x - _t.canvas.geometry.boundingBox.min.x
+    _t.canvas.geometry.height = _t.canvas.geometry.boundingBox.max.y - _t.canvas.geometry.boundingBox.min.y
+    _t.canvas.geometry.depth = _t.canvas.geometry.boundingBox.max.z - _t.canvas.geometry.boundingBox.min.z
 
     _t.canvas.camera.position.y = 0
     _t.canvas.camera.position.z = 0
@@ -104,36 +108,53 @@ $.extend b4u.prototype, {
 
   #
   drawItem : (n,i) ->
+    _t = this
+    group = new THREE.Group()
+    group.uuid = n.id
+
     # Preload image
     img = new Image
     img.onload = ->
-      console.log('preloaded', n.image.url)
+      # IMAGE
+      # Set and load material
+      color = '#' + n.color.hex
+      opac = n.color.alpha / 255
+      opac = 255
+      texture = THREE.ImageUtils.loadTexture this.src
+      texture.anisotropy = _t.canvas.renderer.getMaxAnisotropy()
+      material = new THREE.MeshBasicMaterial { map : texture, opacity: opac }
+      geometryscale = _t.canvas.geometry.height * (n.image.dimensions.width / n.image.dimensions.height)
+      geometry = new THREE.PlaneBufferGeometry(geometryscale, _t.canvas.geometry.height)
+      imgmesh = new THREE.Mesh geometry, material
+      imgmesh.position.set n.x, n.y, (-_t.canvas.step_z * (i + 1))
+      imgmesh.matrixAutoUpdate = false
+      imgmesh.updateMatrix()
+
+
+      # Add Location text
+      textcanvas = document.createElement 'canvas'
+      textcanvas.width = 1000
+      textcanvas.height = 30
+      textcontext = textcanvas.getContext '2d'
+      textcontext.font = "20px 'Helvetica Neue'"
+      textcontext.textAlign = 'center'
+      textcontext.fillStyle = "#000000"
+      textcontext.fillText( (n.address || '...'), textcanvas.width / 2, textcanvas.height / 2 )
+      texttexture = new THREE.Texture textcanvas
+      texttexture.needsUpdate = true;
+      textmaterial = new THREE.MeshBasicMaterial { map: texttexture, side:THREE.DoubleSide }
+      textmaterial.transparent = true
+      textmesh = new THREE.Mesh new THREE.PlaneBufferGeometry(textcanvas.width, textcanvas.height), textmaterial
+      textmesh.position.set n.x, n.y - (75 / 2) - 5, (-_t.canvas.step_z * (i + 1) + 1)
+      textscale = _t.canvas.geometry.width / textcanvas.width
+      textmesh.scale.set textscale, textscale, textscale
+
+      # Add to canvas
+      group.add imgmesh
+      group.add textmesh
+      _t.canvas.queue.add group
     img.src = n.image.url
 
-    # Set and load material
-    color = '#' + n.color.hex
-    opac = n.color.alpha / 255
-    opac = 255
-    texture = THREE.ImageUtils.loadTexture n.image.url
-    texture.anisotropy = this.canvas.renderer.getMaxAnisotropy()
-    material = new THREE.MeshBasicMaterial {
-      map : texture
-      # color: color
-      # transparent: true
-      opacity: opac
-    }
-    mesh = new THREE.Mesh this.canvas.geometry, material
-
-    # Assign attributes
-    mesh.uuid = n.id
-    mesh.position.x = n.x
-    mesh.position.y = n.y
-    mesh.position.z = -this.canvas.step_z * (i + 1)
-    mesh.matrixAutoUpdate = false
-    mesh.updateMatrix()
-
-    # Add to canvas
-    this.canvas.queue.add mesh
 
   #
   redrawItem : (uuid)->
@@ -223,9 +244,9 @@ $.extend b4u.prototype, {
 
   # Get latest
   respondLatest : (data) ->
-    this.prependToQueue([data])
-    this.redrawItems()
-    this.day_count++
+    # this.prependToQueue([data])
+    # this.redrawItems()
+    # this.day_count++
 
   # Get information about self, if processing
   getSelf : ->
